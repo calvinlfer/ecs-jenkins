@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  Creates roles for Jenkins slave tasks. This is meant to be used when ECR resides in a different account where Jenkins
+  resides
+Parameters:
+  ECRRoleArn:
+    Description: The cross account Role for ECR push access
+    Type: String
+  JenkinsCacheBucket:
+    Description: The name of the jenkins cache bucket
+    Type: String  
+Resources:
+  JenkinsSlaveRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: JenkinsSlaveRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Service: ecs-tasks.amazonaws.com
+          Action: sts:AssumeRole
+      Path: /
+      Policies:
+      - PolicyName: JenkinsSlaveECRPolicy
+        PolicyDocument:
+          Statement:
+          - Sid: Stmt1452746887373
+            Effect: Allow
+            Action: sts:AssumeRole
+            Resource: !Ref 'ECRRoleArn'
+      - PolicyName: JenkinsSlaveS3Cache
+        PolicyDocument:
+          Statement:  
+          - Effect: Allow
+            Action:
+            - s3:GetObject
+            Resource: !Sub 'arn:aws:s3:::${JenkinsCacheBucket}/*'
+          - Effect: Allow
+            Action:
+            - s3:ListBucket
+            Resource: !Sub 'arn:aws:s3:::${JenkinsCacheBucket}'
+Outputs:
+  TaskRoleArn:
+    Description: The ARN of the jenkins slave role
+    Value: !GetAtt JenkinsSlaveRole.Arn
