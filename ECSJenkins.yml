@@ -32,7 +32,14 @@ Parameters:
   CertificateArn:
     Type: String
     Description: The ARN of a certificate to attach to the Load Balancer.
-  KinesisStackName: 
+  SetupKinesisSubscriptionFilter:
+    Type: String
+    Description: Controls the creation of the subscription filter resource based on the KinesisStackName
+    Default: 'no'
+    AllowedValues:
+    - 'yes'
+    - 'no'
+  KinesisStackName:
     Type: String
     Description: The name of an existing Kinesis Stack used for streaming logs from cloudwatch to another destination
   S3BackupBucketExists:
@@ -63,6 +70,7 @@ Parameters:
     Default: '180'
 Conditions:
   CreateS3Bucket: !Equals [!Ref 'S3BackupBucketExists', 'no']
+  CreateSubscriptionFilter: !Equals [!Ref 'SetupKinesisSubscriptionFilter', 'yes']
 Resources:
   ELBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -272,6 +280,7 @@ Resources:
     Type: AWS::Logs::SubscriptionFilter
     DependsOn:
     - MasterLogGroup
+    Condition: CreateSubscriptionFilter
     Properties:
       RoleArn: !ImportValue
         Fn::Sub: ${KinesisStackName}-Role-Arn
