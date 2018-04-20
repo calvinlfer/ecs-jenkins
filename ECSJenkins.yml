@@ -170,7 +170,7 @@ Resources:
             Action:
             - iam:PassRole
             Effect: Allow
-            Resource: 'arn:aws:iam::444913385113:role/*'
+            Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/*'
       - PolicyName: JenkinsMasterS3Backup
         PolicyDocument:
           Version: '2012-10-17'
