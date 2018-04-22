@@ -34,6 +34,10 @@ Resources:
               - ecr:DeleteRepositoryPolicy
               - ecr:SetRepositoryPolicy
             Resource: !Sub 'arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/*'
+          - Effect: Allow
+            Action:
+              - ecr:GetAuthorizationToken
+            Resource: '*'
       - PolicyName: JenkinsSlaveS3Cache
         PolicyDocument:
           Statement:
