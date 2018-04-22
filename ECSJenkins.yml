@@ -64,10 +64,45 @@ Parameters:
     Type: Number
     Description: The minimum CPU units reserved for jenkins master. (1000 = 1 core)
     Default: '1000'
+  JenkinsMasterDockerImage:
+    Type: String
+    Description: The Docker image to use for the Jenkins master (resides on Docker Hub)
+    Default: 'loyaltyone/jenkins'
   LoadBalancerIdleTimeout:
     Type: Number
     Description: The time in seconds the ELB will keep idle connections active. Increase this if you see intermittent disconnects of slaves
     Default: '180'
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: 'General'
+        Parameters:
+          - ClusterStackName
+          - TimeZone
+      - Label:
+          default: 'Jenkins Master ECS specifications'
+        Parameters:
+          - Cpu
+          - Memory
+          - JenkinsMasterDockerImage
+      - Label:
+          default: 'Network'
+        Parameters:
+          - SubnetIds
+          - AllowedCidr
+          - HostedZoneName
+          - CertificateArn
+          - LoadBalancerIdleTimeout
+      - Label:
+          default: 'Backups and logs'
+        Parameters:
+          - MasterLogRetention
+          - SlaveLogRetention
+          - SetupKinesisSubscriptionFilter
+          - KinesisStackName
+          - S3BackupBucketExists
+          - S3BackupBucketName
 Conditions:
   CreateS3Bucket: !Equals [!Ref 'S3BackupBucketExists', 'no']
   CreateSubscriptionFilter: !Equals [!Ref 'SetupKinesisSubscriptionFilter', 'yes']
@@ -199,7 +234,7 @@ Resources:
     Properties:
       ContainerDefinitions:
       - Name: jenkins
-        Image: loyaltyone/jenkins
+        Image: !Ref 'JenkinsMasterDockerImage'
         Hostname: jenkins
         Cpu: !Ref 'Cpu'
         MemoryReservation: !Ref 'Memory'
