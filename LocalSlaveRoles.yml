@@ -6,6 +6,9 @@ Parameters:
   JenkinsCacheBucket:
     Description: The name of the jenkins cache bucket
     Type: String
+  JenkinsArtifactBucket:
+    Description: The name of the jenkins artifact bucket (i.e. JARs)
+    Type: String
 Resources:
   JenkinsSlaveRole:
     Type: AWS::IAM::Role
@@ -49,6 +52,18 @@ Resources:
             Action:
             - s3:ListBucket
             Resource: !Sub 'arn:aws:s3:::${JenkinsCacheBucket}'
+      - # This IAM policy is temporary (remove once we stop storing Maven/Ivy2 artifacts are not stored in S3)
+        PolicyName: JenkinsSlaveS3Artifact
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:GetObject
+            Resource: !Sub 'arn:aws:s3:::${JenkinsArtifactBucket}/*'
+          - Effect: Allow
+            Action:
+            - s3:ListBucket
+            Resource: !Sub 'arn:aws:s3:::${JenkinsArtifactBucket}'
 
 Outputs:
   TaskRoleArn:
