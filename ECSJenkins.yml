@@ -240,7 +240,7 @@ Resources:
         MemoryReservation: !Ref 'Memory'
         Environment:
         - Name: JAVA_OPTS
-          Value: !Sub '-Djenkins.install.runSetupWizard=false -Dorg.apache.commons.jelly.tags.fmt.timeZone=${TimeZone}'
+          Value: !Sub '-Djenkins.install.runSetupWizard=false -Dorg.apache.commons.jelly.tags.fmt.timeZone=${TimeZone} -Dhudson.slaves.NodeProvisioner.MARGIN=50 -Dhudson.slaves.NodeProvisioner.MARGIN0=0.85'
         # We will run as this user (docker-user) 
         - Name: LOCAL_USER_ID
           Value: 5001
