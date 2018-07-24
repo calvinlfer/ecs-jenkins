@@ -9,6 +9,11 @@ Parameters:
   JenkinsArtifactBucket:
     Description: The name of the jenkins artifact bucket (i.e. JARs)
     Type: String
+  S3DeploymentBucketArns:
+    Type: List<String>
+    Description: List of S3 bucket ARNs to give access for deployment
+Conditions:
+  CreateS3DeploymentBucketPolicy: !Not [ !Equals [ '', !Join ['', !Ref S3DeploymentBucketArns] ] ]
 Resources:
   JenkinsSlaveRole:
     Type: AWS::IAM::Role
@@ -64,6 +69,25 @@ Resources:
             Action:
             - s3:ListBucket
             Resource: !Sub 'arn:aws:s3:::${JenkinsArtifactBucket}'
+  JenkinsSlaveRoleS3DeploymentBucketPolicy:
+    Type: AWS::IAM::Policy
+    Condition: CreateS3DeploymentBucketPolicy
+    Properties:
+      Roles: [!Ref JenkinsSlaveRole]
+      PolicyName: S3DeploymentBucketPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Resource: !Ref S3DeploymentBucketArns
+          Action:
+          - s3:ListBucket
+        - Effect: Allow
+          Resource: !Split [',', !Join ['', [!Join ['/*,', !Ref S3DeploymentBucketArns], '/*']]]
+          Action:
+          - s3:GetObject
+          - s3:PutObject
+          - s3:ListMultipartUploadParts
 
 Outputs:
   TaskRoleArn:

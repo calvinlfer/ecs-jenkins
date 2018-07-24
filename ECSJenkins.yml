@@ -72,6 +72,10 @@ Parameters:
     Type: Number
     Description: The time in seconds the ELB will keep idle connections active. Increase this if you see intermittent disconnects of slaves
     Default: '180'
+  S3DeploymentBucketArns:
+    Type: List<String>
+    Description: List of S3 bucket ARNs to give access for deployment
+
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -103,9 +107,15 @@ Metadata:
           - KinesisStackName
           - S3BackupBucketExists
           - S3BackupBucketName
+      - Label:
+          default: 'S3 Deployment Bucket ARNs'
+        Parameters:
+          - S3DeploymentBucketArns
 Conditions:
   CreateS3Bucket: !Equals [!Ref 'S3BackupBucketExists', 'no']
   CreateSubscriptionFilter: !Equals [!Ref 'SetupKinesisSubscriptionFilter', 'yes']
+  CreateS3DeploymentBucketPolicy: !Not [ !Equals [ '', !Join ['', !Ref S3DeploymentBucketArns] ] ]
+
 Resources:
   ELBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -229,6 +239,25 @@ Resources:
             - s3:PutObject
             Effect: Allow
             Resource: !Sub 'arn:aws:s3:::${S3BackupBucketName}/*'
+  EcsTaskRoleS3DeploymentBucketPolicy:
+    Type: AWS::IAM::Policy
+    Condition: CreateS3DeploymentBucketPolicy
+    Properties:
+      Roles: [!Ref EcsTaskRole]
+      PolicyName: S3DeploymentBucketPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Resource: !Ref S3DeploymentBucketArns
+          Action:
+          - s3:ListBucket
+        - Effect: Allow
+          Resource: !Split [',', !Join ['', [!Join ['/*,', !Ref S3DeploymentBucketArns], '/*']]]
+          Action:
+          - s3:GetObject
+          - s3:PutObject
+          - s3:ListMultipartUploadParts
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
